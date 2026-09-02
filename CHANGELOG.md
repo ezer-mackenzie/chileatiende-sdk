@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-09-02
+
+### Added
+- First stable production release of `chileatiende-sdk`.
+- Integrated exponential backoff retries for transient 429/5xx errors in `ClientConfig`.
+- Flexible in-memory caching layer via `CacheStorage` & `InMemoryCacheStorage`.
+- DataFrame export utilities (`to_pandas()`, `to_polars()`) on `FichasFeed`, `ServiciosFeed`, and `SucursalesFeed`.
+- Command Line Interface (CLI) binary `chileatiende` for terminal operations.
+- Auto-paginating iterators (`iter_fichas()`, `aiter_fichas()`).
+- Clean HTML-stripped text properties on procedure sheets (`Ficha`).
+
 ## [0.2.0-alpha.1] - 2026-09-02
 
 ### Added

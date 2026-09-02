@@ -21,7 +21,12 @@ from chileatiende_sdk import ChileAtiendeSDK
 
 with ChileAtiendeSDK() as client:
     ficha = client.get_ficha(1)
-    print(ficha.titulo)
+    print(f"Title: {ficha.titulo}")
+    print(f"Objective: {ficha.clean_objetivo}")
+
+    # Auto-paginating iterator
+    for item in client.iter_fichas(query="pension"):
+        print(item.titulo)
 ```
 
 ## Asynchronous Usage
@@ -36,4 +41,12 @@ async def run():
         print(f"Total Services: {len(servicios.items)}")
 
 asyncio.run(run())
+```
+
+## Command Line Interface (CLI)
+
+```bash
+chileatiende ficha get 1
+chileatiende servicio list
+chileatiende sucursal list
 ```

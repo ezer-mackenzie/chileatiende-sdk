@@ -12,10 +12,14 @@ A modern, fully typed synchronous and asynchronous Python SDK for consuming the 
 ## 🚀 Features
 
 - **Full Async & Sync Support**: Built on `httpx` for both synchronous workflows and asynchronous (`async/await`) executions.
+- **Auto-Paginating Iterators**: Effortlessly traverse pages with `iter_fichas()` and `aiter_fichas()`.
+- **Automatic Retries & Resilience**: Exponential backoff handling transient `429` rate limits and `5xx` server errors.
+- **In-Memory Caching Layer**: Pluggable TTL caching layer via `InMemoryCacheStorage`.
+- **DataFrame Exports**: Native `.to_pandas()` and `.to_polars()` helper methods on feed objects.
+- **CLI Utility**: Command Line Tool `chileatiende` for terminal operations.
+- **Plaintext HTML Strippers**: Clean properties (`clean_objetivo`, `clean_beneficiarios`, etc.) for procedure sheets.
 - **Pydantic v2 Models**: Strongly typed and validated response models (`Ficha`, `Servicio`, `Sucursal`, feeds, and envelopes).
-- **Typed Error Hierarchy**: Clear, actionable exceptions (`AuthenticationError`, `NotFoundError`, `RequestValidationError`, `APIError`).
 - **PEP 561 / Strict Mypy**: Fully annotated with type hints, ready for `--strict` mypy type checking.
-- **Flexible Authentication**: Configure API credentials via direct parameters or environment variables (`CHILEATIENDE_ACCESS_TOKEN`).
 
 ---
 
@@ -35,7 +39,7 @@ poetry add chileatiende-sdk
 
 ## 🔑 Authentication
 
-To make requests to the ChileAtiende API, an `access_token` is required. You can obtain one from the official developers portal and supply it directly or set it in your environment:
+To make requests to the ChileAtiende API, an `access_token` is required. Set it in your environment:
 
 ```bash
 export CHILEATIENDE_ACCESS_TOKEN="your_access_token_here"
@@ -45,7 +49,7 @@ export CHILEATIENDE_ACCESS_TOKEN="your_access_token_here"
 
 ## 💡 Quick Examples
 
-### Synchronous Usage (`SyncChileAtiendeSDK`)
+### Synchronous Usage & Auto-Pagination
 
 ```python
 from chileatiende_sdk import ChileAtiendeSDK
@@ -53,37 +57,66 @@ from chileatiende_sdk import ChileAtiendeSDK
 with ChileAtiendeSDK(access_token="your_access_token") as client:
     # Fetch a procedure sheet (Ficha) by ID
     ficha = client.get_ficha(1)
-    print(f"Ficha ID: {ficha.id}")
     print(f"Title: {ficha.titulo}")
-    print(f"Institution: {ficha.servicio}")
+    print(f"Plaintext Objective: {ficha.clean_objetivo}")
 
-    # Search and list Fichas
-    fichas_feed = client.list_fichas(query="pension", max_results=5)
-    for item in fichas_feed.items:
-        print(f"- {item.titulo}")
-
-    # List all state services/institutions
-    servicios_feed = client.list_servicios()
-    print(f"Total Institutions: {len(servicios_feed.items)}")
+    # Auto-iterate through all search results across pages
+    for item in client.iter_fichas(query="pension"):
+        print(f"- [{item.id}] {item.titulo}")
 ```
 
-### Asynchronous Usage (`AsyncChileAtiendeSDK`)
+### Asynchronous Usage & Caching
 
 ```python
 import asyncio
-from chileatiende_sdk import AsyncChileAtiendeSDK
+from chileatiende_sdk import AsyncChileAtiendeClient, ClientConfig, InMemoryCacheStorage
 
 async def main():
-    async with AsyncChileAtiendeSDK(access_token="your_access_token") as client:
-        # Fetch detailed service information
-        servicio = await client.get_servicio("AD001")
-        print(f"Service: {servicio.titulo} ({servicio.sigla})")
+    cache = InMemoryCacheStorage()
+    config = ClientConfig(cache_storage=cache, cache_ttl=3600)
 
-        # List physical branch offices
-        sucursales = await client.list_sucursales(mobile_offices=False)
-        print(f"Total Branches: {sucursales.total or len(sucursales.items)}")
+    async with AsyncChileAtiendeClient(config=config) as client:
+        # First call fetches from API and caches result
+        servicio = await client.get_servicio("AD001")
+        print(f"Service: {servicio.titulo}")
+
+        # Subsequent call reads instantly from cache
+        cached_servicio = await client.get_servicio("AD001")
 
 asyncio.run(main())
+```
+
+### DataFrame Conversion (Pandas & Polars)
+
+```python
+with ChileAtiendeSDK() as client:
+    feed = client.list_fichas(query="beca")
+
+    # Export to pandas DataFrame
+    df_pandas = feed.to_pandas()
+
+    # Export to polars DataFrame
+    df_polars = feed.to_polars()
+```
+
+---
+
+## 💻 CLI Usage
+
+The package installs a `chileatiende` binary for terminal usage:
+
+```bash
+# Get a single procedure sheet
+chileatiende ficha get 1
+
+# Search procedure sheets
+chileatiende ficha search pension
+
+# List public institutions
+chileatiende servicio list
+
+# List branch offices
+chileatiende sucursal list
 ```
 
 ---
@@ -94,37 +127,12 @@ asyncio.run(main())
 |---|---|---|
 | **Fichas** | `get_ficha(ficha_id)` | Retrieve details for a procedure sheet by ID |
 | **Fichas** | `list_fichas(query, max_results, page_token)` | List and search procedure sheets with pagination |
+| **Fichas Iterator** | `iter_fichas(query)` / `aiter_fichas(query)` | Auto-paginating iterator across all pages |
 | **Fichas by Service** | `list_fichas_by_servicio(servicio_id)` | List procedure sheets for a specific state institution |
 | **Servicios** | `get_servicio(servicio_id)` | Retrieve details for a state service/institution |
 | **Servicios** | `list_servicios()` | List all state services publishing in ChileAtiende |
 | **Sucursales** | `get_sucursal(sucursal_id)` | Retrieve details for a branch office |
 | **Sucursales** | `list_sucursales(mobile_offices)` | List branch offices or filter mobile offices |
-
----
-
-## 🚨 Exception Handling
-
-```python
-from chileatiende_sdk import ChileAtiendeSDK
-from chileatiende_sdk.errors import (
-    AuthenticationError,
-    NotFoundError,
-    RequestValidationError,
-    APIError,
-)
-
-try:
-    with ChileAtiendeSDK() as client:
-        ficha = client.get_ficha(999999)
-except AuthenticationError:
-    print("Invalid or missing access token.")
-except NotFoundError:
-    print("The requested procedure sheet does not exist.")
-except RequestValidationError as e:
-    print(f"Invalid parameter value: {e}")
-except APIError as e:
-    print(f"API request error: {e}")
-```
 
 ---
 
