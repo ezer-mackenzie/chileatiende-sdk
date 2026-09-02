@@ -24,6 +24,21 @@ def test_ficha_model_tag_list_conversion() -> None:
     assert ficha.tags == ["TagA", "TagB"]
 
 
+def test_ficha_html_stripping() -> None:
+    data = {
+        "id": "5",
+        "titulo": "HTML Test Ficha",
+        "objetivo": "<p>Solicitar a la <strong>Dirección</strong> de Previsión.</p>",
+        "beneficiarios": "<p>El personal activo y montepiados.</p>",
+        "costo": "<p>Ninguno.</p>",
+    }
+    ficha = Ficha.model_validate(data)
+    assert ficha.clean_objetivo == "Solicitar a la Dirección de Previsión."
+    assert ficha.clean_beneficiarios == "El personal activo y montepiados."
+    assert ficha.clean_costo == "Ninguno."
+    assert ficha.clean_vigencia is None
+
+
 def test_servicio_model_parsing(mock_servicio_data: dict) -> None:
     data = mock_servicio_data["servicio"]
     servicio = Servicio.model_validate(data)

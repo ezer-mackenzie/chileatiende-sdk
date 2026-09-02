@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def _strip_html(raw_html: str | None) -> str | None:
+    """Remove HTML tags from a text string and collapse extra whitespace."""
+    if not raw_html:
+        return None
+    cleaned = re.sub(r"<[^>]+>", " ", raw_html)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned if cleaned else None
 
 
 class Ficha(BaseModel):
@@ -30,6 +40,31 @@ class Ficha(BaseModel):
     temas: list[str] = Field(default_factory=list, description="Associated categories/topics.")
     tags: list[str] = Field(default_factory=list, description="Associated tags.")
     url: str | None = Field(default=None, description="Direct URL to the Ficha in ChileAtiende.")
+
+    @property
+    def clean_objetivo(self) -> str | None:
+        """Plaintext objective with HTML tags removed."""
+        return _strip_html(self.objetivo)
+
+    @property
+    def clean_beneficiarios(self) -> str | None:
+        """Plaintext beneficiaries description with HTML tags removed."""
+        return _strip_html(self.beneficiarios)
+
+    @property
+    def clean_costo(self) -> str | None:
+        """Plaintext cost description with HTML tags removed."""
+        return _strip_html(self.costo)
+
+    @property
+    def clean_vigencia(self) -> str | None:
+        """Plaintext validity timeframe with HTML tags removed."""
+        return _strip_html(self.vigencia)
+
+    @property
+    def clean_plazo(self) -> str | None:
+        """Plaintext processing timeframe with HTML tags removed."""
+        return _strip_html(self.plazo)
 
     @field_validator("temas", mode="before")
     @classmethod
