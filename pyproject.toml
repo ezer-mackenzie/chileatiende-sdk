@@ -1,0 +1,86 @@
+[project]
+name = "chileatiende-sdk"
+version = "0.1.0"
+description = "Python SDK for the ChileAtiende API."
+authors = [
+    {name = "Eli-ezer Reuven Ramirez Ruiz", email = "ramirez.ruiz.eliezer.reuven@gmail.com"}
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+keywords = [
+    "chileatiende",
+    "chile",
+    "gobierno-de-chile",
+    "api",
+    "sdk",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "httpx[brotli,zstd] (>=0.28.1,<0.29.0)",
+    "pydantic (>=2.10.0,<3.0.0)",
+    "httpx-retries (>=0.6.0,<0.7.0)",
+]
+
+[project.urls]
+Homepage = "https://github.com/ezer-mackenzie/chileatiende-sdk"
+Documentation = "https://ezer-mackenzie.github.io/chileatiende-sdk/"
+Repository = "https://github.com/ezer-mackenzie/chileatiende-sdk"
+Issues = "https://github.com/ezer-mackenzie/chileatiende-sdk/issues"
+Changelog = "https://github.com/ezer-mackenzie/chileatiende-sdk/blob/main/CHANGELOG.md"
+
+[tool.poetry]
+packages = [{ include = "chileatiende_sdk", from = "src" }]
+
+[tool.poetry.group.dev.dependencies]
+mypy = ">=1.10.0,<2.0.0"
+pre-commit = ">=4.0.0,<5.0.0"
+ruff = ">=0.8.0,<0.16.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=8.0.0,<9.0.0"
+pytest-cov = ">=6.0.0,<8.0.0"
+pytest-asyncio = ">=0.24.0,<1.0.0"
+respx = ">=0.21.0,<0.23.0"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = ">=1.6.0,<2.0.0"
+mkdocs-material = ">=9.5.0,<10.0.0"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+branch = true
+source = ["chileatiende_sdk"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["chileatiende_sdk"]
+strict = true
+warn_unreachable = true
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
