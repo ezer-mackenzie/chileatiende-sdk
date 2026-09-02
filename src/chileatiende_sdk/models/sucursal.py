@@ -44,6 +44,22 @@ class SucursalesFeed(BaseModel):
     items: list[Sucursal] = Field(default_factory=list, description="List of Sucursales returned.")
     total: int | None = Field(default=None, description="Total number of sucursales matching filter.")
 
+    def to_pandas(self) -> Any:
+        """Export feed items to a pandas DataFrame."""
+        try:
+            import pandas as pd  # type: ignore[import-untyped]
+        except ImportError as exc:
+            raise ImportError("pandas is required for to_pandas(). Install it with `pip install pandas`.") from exc
+        return pd.DataFrame([item.model_dump() for item in self.items])
+
+    def to_polars(self) -> Any:
+        """Export feed items to a polars DataFrame."""
+        try:
+            import polars as pl  # type: ignore[import-not-found]
+        except ImportError as exc:
+            raise ImportError("polars is required for to_polars(). Install it with `pip install polars`.") from exc
+        return pl.DataFrame([item.model_dump() for item in self.items])
+
 
 class SingleSucursalResponse(BaseModel):
     """Wrapper envelope for single Sucursal API response."""
