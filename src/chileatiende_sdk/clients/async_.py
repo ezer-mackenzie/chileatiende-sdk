@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Mapping
 from typing import Any, Self
 
 import httpx
@@ -118,6 +118,22 @@ class AsyncChileAtiendeClient:
             return ResponseParser.parse_model(FichasFeedEnvelope, payload).fichas
         return ResponseParser.parse_model(FichasFeed, payload)
 
+    async def aiter_fichas(
+        self,
+        *,
+        query: str | None = None,
+        max_results: int = 100,
+    ) -> AsyncIterator[Ficha]:
+        """Automatically iterate over all Fichas asynchronously across pages."""
+        page_token: str | None = None
+        while True:
+            feed = await self.list_fichas(query=query, max_results=max_results, page_token=page_token)
+            for item in feed.items:
+                yield item
+            if not feed.next_page_token:
+                break
+            page_token = feed.next_page_token
+
     async def list_fichas_by_servicio(
         self,
         servicio_id: str,
@@ -140,6 +156,22 @@ class AsyncChileAtiendeClient:
         if "fichas" in payload:
             return ResponseParser.parse_model(FichasFeedEnvelope, payload).fichas
         return ResponseParser.parse_model(FichasFeed, payload)
+
+    async def aiter_fichas_by_servicio(
+        self,
+        servicio_id: str,
+        *,
+        max_results: int = 100,
+    ) -> AsyncIterator[Ficha]:
+        """Automatically iterate over all Fichas for a service asynchronously across pages."""
+        page_token: str | None = None
+        while True:
+            feed = await self.list_fichas_by_servicio(servicio_id, max_results=max_results, page_token=page_token)
+            for item in feed.items:
+                yield item
+            if not feed.next_page_token:
+                break
+            page_token = feed.next_page_token
 
     async def get_servicio(self, servicio_id: str) -> Servicio:
         """Obtain detailed information for a single public service/institution asynchronously."""

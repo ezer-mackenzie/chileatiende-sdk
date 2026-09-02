@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
 from typing import Any, Self
 
 import httpx
@@ -118,6 +118,21 @@ class SyncChileAtiendeClient:
             return ResponseParser.parse_model(FichasFeedEnvelope, payload).fichas
         return ResponseParser.parse_model(FichasFeed, payload)
 
+    def iter_fichas(
+        self,
+        *,
+        query: str | None = None,
+        max_results: int = 100,
+    ) -> Iterator[Ficha]:
+        """Automatically iterate over all Fichas across multiple pages."""
+        page_token: str | None = None
+        while True:
+            feed = self.list_fichas(query=query, max_results=max_results, page_token=page_token)
+            yield from feed.items
+            if not feed.next_page_token:
+                break
+            page_token = feed.next_page_token
+
     def list_fichas_by_servicio(
         self,
         servicio_id: str,
@@ -140,6 +155,21 @@ class SyncChileAtiendeClient:
         if "fichas" in payload:
             return ResponseParser.parse_model(FichasFeedEnvelope, payload).fichas
         return ResponseParser.parse_model(FichasFeed, payload)
+
+    def iter_fichas_by_servicio(
+        self,
+        servicio_id: str,
+        *,
+        max_results: int = 100,
+    ) -> Iterator[Ficha]:
+        """Automatically iterate over all Fichas for a specific service across pages."""
+        page_token: str | None = None
+        while True:
+            feed = self.list_fichas_by_servicio(servicio_id, max_results=max_results, page_token=page_token)
+            yield from feed.items
+            if not feed.next_page_token:
+                break
+            page_token = feed.next_page_token
 
     def get_servicio(self, servicio_id: str) -> Servicio:
         """Obtain detailed information for a single public service/institution."""

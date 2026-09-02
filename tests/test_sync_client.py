@@ -38,6 +38,38 @@ def test_sync_list_fichas(test_token: str, mock_fichas_feed_data: dict) -> None:
 
 
 @respx.mock
+def test_sync_iter_fichas(test_token: str) -> None:
+    page1 = {
+        "fichas": {
+            "titulo": "Listado de Fichas",
+            "tipo": "chileatiende#fichasFeed",
+            "nextPageToken": "token_page_2",
+            "items": [{"id": "1", "titulo": "Ficha 1"}, {"id": "2", "titulo": "Ficha 2"}],
+        }
+    }
+    page2 = {
+        "fichas": {
+            "titulo": "Listado de Fichas",
+            "tipo": "chileatiende#fichasFeed",
+            "nextPageToken": None,
+            "items": [{"id": "3", "titulo": "Ficha 3"}],
+        }
+    }
+
+    route = respx.get("https://www.chileatiende.gob.cl/api/fichas")
+    route.side_effect = [
+        respx.MockResponse(200, json=page1),
+        respx.MockResponse(200, json=page2),
+    ]
+
+    client = SyncChileAtiendeClient(access_token=test_token)
+    items = list(client.iter_fichas(max_results=100))
+
+    assert len(items) == 3
+    assert [item.id for item in items] == ["1", "2", "3"]
+
+
+@respx.mock
 def test_sync_get_servicio(test_token: str, mock_servicio_data: dict) -> None:
     respx.get("https://www.chileatiende.gob.cl/api/servicios/AD001").respond(
         status_code=200, json=mock_servicio_data
