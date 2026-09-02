@@ -10,6 +10,8 @@ from .errors import AuthenticationError
 
 DEFAULT_BASE_URL = "https://www.chileatiende.gob.cl/api"
 DEFAULT_TIMEOUT = 30.0
+DEFAULT_MAX_RETRIES = 3
+DEFAULT_BACKOFF_FACTOR = 0.5
 
 
 @dataclass
@@ -20,12 +22,16 @@ class ClientConfig:
         access_token: API access token. If omitted, resolved from `CHILEATIENDE_ACCESS_TOKEN`.
         base_url: Base URL for ChileAtiende API endpoints.
         timeout: Request timeout in seconds.
+        max_retries: Maximum number of retries for transient HTTP/network errors.
+        backoff_factor: Multiplier factor for exponential backoff sleep.
         headers: Additional HTTP headers to include with requests.
     """
 
     access_token: str | None = None
     base_url: str = DEFAULT_BASE_URL
     timeout: float = DEFAULT_TIMEOUT
+    max_retries: int = DEFAULT_MAX_RETRIES
+    backoff_factor: float = DEFAULT_BACKOFF_FACTOR
     headers: Mapping[str, str] | None = None
 
     def resolved_access_token(self) -> str:

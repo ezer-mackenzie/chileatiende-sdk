@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator, Mapping
 from typing import Any, Self
 
@@ -31,7 +32,7 @@ from ..models import (
 from ..params import ParameterEncoder
 from ..parsers import ResponseParser
 
-NETWORK_ERRORS = (httpx.ConnectError, httpx.CloseError, httpx.ProtocolError)
+NETWORK_EXCEPTIONS = (httpx.ConnectError, httpx.CloseError, httpx.ProtocolError)
 
 
 class AsyncChileAtiendeClient:
@@ -75,16 +76,33 @@ class AsyncChileAtiendeClient:
         }
         compact_params = ParameterEncoder.compact(query_params)
 
-        try:
-            response = await self._http_client.get(url, params=compact_params, headers=headers)
-        except httpx.TimeoutException as exc:
-            raise RequestTimeoutError("ChileAtiende request timed out.") from exc
-        except NETWORK_ERRORS as exc:
-            raise NetworkError("Failed to connect to ChileAtiende API.") from exc
-        except httpx.HTTPError as exc:
-            raise TransportError("HTTP transport failure while communicating with ChileAtiende.") from exc
+        max_attempts = max(1, self.config.max_retries + 1)
+        attempts = 0
+        last_exc: Exception | None = None
 
-        return ResponseParser.decode_response(response)
+        while attempts < max_attempts:
+            attempts += 1
+            try:
+                response = await self._http_client.get(url, params=compact_params, headers=headers)
+                if response.status_code in (429, 500, 502, 503, 504) and attempts < max_attempts:
+                    await asyncio.sleep(self.config.backoff_factor * (2 ** (attempts - 1)))
+                    continue
+                return ResponseParser.decode_response(response)
+            except httpx.TimeoutException as exc:
+                last_exc = exc
+                if attempts < max_attempts:
+                    await asyncio.sleep(self.config.backoff_factor * (2 ** (attempts - 1)))
+                    continue
+                raise RequestTimeoutError("ChileAtiende request timed out.") from exc
+            except NETWORK_EXCEPTIONS as exc:
+                last_exc = exc
+                if attempts < max_attempts:
+                    await asyncio.sleep(self.config.backoff_factor * (2 ** (attempts - 1)))
+                    continue
+                raise NetworkError("Failed to connect to ChileAtiende API.") from exc
+
+        if last_exc:
+            raise TransportError("HTTP transport failure while communicating with ChileAtiende.") from last_exc
 
     async def get_ficha(self, ficha_id: int | str) -> Ficha:
         """Obtain detailed information for a single procedure/sheet (Ficha) asynchronously."""

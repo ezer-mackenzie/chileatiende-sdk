@@ -4,6 +4,7 @@ import pytest
 import respx
 
 from chileatiende_sdk.clients import SyncChileAtiendeClient
+from chileatiende_sdk.config import ClientConfig
 from chileatiende_sdk.errors import (
     AuthenticationError,
     NotFoundError,
@@ -22,6 +23,22 @@ def test_sync_get_ficha(test_token: str, mock_ficha_data: dict) -> None:
 
     assert ficha.id == "1"
     assert ficha.servicio == "Dirección de Previsión de Carabineros de Chile"
+
+
+@respx.mock
+def test_sync_retry_on_server_error(test_token: str, mock_ficha_data: dict) -> None:
+    route = respx.get("https://www.chileatiende.gob.cl/api/fichas/1")
+    route.side_effect = [
+        respx.MockResponse(500),
+        respx.MockResponse(200, json=mock_ficha_data),
+    ]
+
+    config = ClientConfig(access_token=test_token, max_retries=2, backoff_factor=0.01)
+    client = SyncChileAtiendeClient(config=config)
+    ficha = client.get_ficha(1)
+
+    assert ficha.id == "1"
+    assert route.call_count == 2
 
 
 @respx.mock
