@@ -32,6 +32,9 @@ dependencies = [
     "httpx-retries (>=0.6.0,<0.7.0)",
 ]
 
+[project.scripts]
+chileatiende = "chileatiende_sdk.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/ezer-mackenzie/chileatiende-sdk"
 Documentation = "https://ezer-mackenzie.github.io/chileatiende-sdk/"
@@ -41,6 +44,9 @@ Changelog = "https://github.com/ezer-mackenzie/chileatiende-sdk/blob/main/CHANGE
 
 [tool.poetry]
 packages = [{ include = "chileatiende_sdk", from = "src" }]
+
+[tool.poetry.scripts]
+chileatiende = "chileatiende_sdk.cli:main"
 
 [tool.poetry.group.dev.dependencies]
 mypy = ">=1.10.0,<2.0.0"
