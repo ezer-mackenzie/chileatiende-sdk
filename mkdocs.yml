@@ -1,0 +1,48 @@
+site_name: chileatiende-sdk Documentation
+site_description: Python SDK for the ChileAtiende API
+site_url: https://ezer-mackenzie.github.io/chileatiende-sdk/
+
+repo_name: ezer-mackenzie/chileatiende-sdk
+repo_url: https://github.com/ezer-mackenzie/chileatiende-sdk
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+
+nav:
+  - Inicio: index.md
+  - Guía de Inicio: quickstart.md
