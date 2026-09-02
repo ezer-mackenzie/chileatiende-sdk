@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
-from typing import Mapping
+from typing import TYPE_CHECKING, Mapping
+
+if TYPE_CHECKING:
+    from .cache import CacheStorage
 
 from .errors import AuthenticationError
 
@@ -12,6 +15,7 @@ DEFAULT_BASE_URL = "https://www.chileatiende.gob.cl/api"
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_BACKOFF_FACTOR = 0.5
+DEFAULT_CACHE_TTL = 3600.0
 
 
 @dataclass
@@ -24,6 +28,8 @@ class ClientConfig:
         timeout: Request timeout in seconds.
         max_retries: Maximum number of retries for transient HTTP/network errors.
         backoff_factor: Multiplier factor for exponential backoff sleep.
+        cache_storage: Cache storage provider for GET endpoints.
+        cache_ttl: Cache TTL in seconds.
         headers: Additional HTTP headers to include with requests.
     """
 
@@ -32,6 +38,8 @@ class ClientConfig:
     timeout: float = DEFAULT_TIMEOUT
     max_retries: int = DEFAULT_MAX_RETRIES
     backoff_factor: float = DEFAULT_BACKOFF_FACTOR
+    cache_storage: CacheStorage | None = None
+    cache_ttl: float = DEFAULT_CACHE_TTL
     headers: Mapping[str, str] | None = None
 
     def resolved_access_token(self) -> str:

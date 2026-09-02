@@ -110,10 +110,18 @@ class AsyncChileAtiendeClient:
         if not ficha_id_str:
             raise RequestValidationError("ficha_id cannot be empty.")
 
+        cache_key = f"ficha:{ficha_id_str}"
+        if self.config.cache_storage:
+            cached = self.config.cache_storage.get(cache_key)
+            if isinstance(cached, Ficha):
+                return cached
+
         payload = await self._request(f"fichas/{ficha_id_str}")
-        if "ficha" in payload:
-            return ResponseParser.parse_model(SingleFichaResponse, payload).ficha
-        return ResponseParser.parse_model(Ficha, payload)
+        result: Ficha = ResponseParser.parse_model(SingleFichaResponse, payload).ficha if "ficha" in payload else ResponseParser.parse_model(Ficha, payload)
+
+        if self.config.cache_storage:
+            self.config.cache_storage.set(cache_key, result, ttl=self.config.cache_ttl)
+        return result
 
     async def list_fichas(
         self,
@@ -197,10 +205,18 @@ class AsyncChileAtiendeClient:
         if not servicio_id_clean:
             raise RequestValidationError("servicio_id cannot be empty.")
 
+        cache_key = f"servicio:{servicio_id_clean}"
+        if self.config.cache_storage:
+            cached = self.config.cache_storage.get(cache_key)
+            if isinstance(cached, Servicio):
+                return cached
+
         payload = await self._request(f"servicios/{servicio_id_clean}")
-        if "servicio" in payload:
-            return ResponseParser.parse_model(SingleServicioResponse, payload).servicio
-        return ResponseParser.parse_model(Servicio, payload)
+        result: Servicio = ResponseParser.parse_model(SingleServicioResponse, payload).servicio if "servicio" in payload else ResponseParser.parse_model(Servicio, payload)
+
+        if self.config.cache_storage:
+            self.config.cache_storage.set(cache_key, result, ttl=self.config.cache_ttl)
+        return result
 
     async def list_servicios(self) -> ServiciosFeed:
         """List all public services/institutions registered in ChileAtiende asynchronously."""
@@ -215,10 +231,18 @@ class AsyncChileAtiendeClient:
         if not sucursal_id_clean:
             raise RequestValidationError("sucursal_id cannot be empty.")
 
+        cache_key = f"sucursal:{sucursal_id_clean}"
+        if self.config.cache_storage:
+            cached = self.config.cache_storage.get(cache_key)
+            if isinstance(cached, Sucursal):
+                return cached
+
         payload = await self._request(f"sucursales/{sucursal_id_clean}")
-        if "sucursal" in payload:
-            return ResponseParser.parse_model(SingleSucursalResponse, payload).sucursal
-        return ResponseParser.parse_model(Sucursal, payload)
+        result: Sucursal = ResponseParser.parse_model(SingleSucursalResponse, payload).sucursal if "sucursal" in payload else ResponseParser.parse_model(Sucursal, payload)
+
+        if self.config.cache_storage:
+            self.config.cache_storage.set(cache_key, result, ttl=self.config.cache_ttl)
+        return result
 
     async def list_sucursales(self, *, mobile_offices: bool | None = None) -> SucursalesFeed:
         """List all branch offices (Sucursales) asynchronously with optional filter for mobile offices."""

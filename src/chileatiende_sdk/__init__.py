@@ -1,6 +1,7 @@
 """ChileAtiende Python SDK."""
 
 from ._version import __version__
+from .cache import CacheStorage, InMemoryCacheStorage
 from .clients import AsyncChileAtiendeClient, SyncChileAtiendeClient
 from .config import ClientConfig
 from .errors import (
@@ -27,6 +28,8 @@ from .sdk import AsyncChileAtiendeSDK, ChileAtiendeSDK, SyncChileAtiendeSDK
 __all__ = [
     "__version__",
     "ClientConfig",
+    "CacheStorage",
+    "InMemoryCacheStorage",
     "ChileAtiendeSDK",
     "SyncChileAtiendeSDK",
     "AsyncChileAtiendeSDK",
